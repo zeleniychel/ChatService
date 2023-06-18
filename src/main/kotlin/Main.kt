@@ -10,7 +10,7 @@ fun main() {
 object ChatService {
     private var chatsId = 0
     private var messagesId = 0
-    val chatsList = mutableListOf<Chat>()
+    private val chatsList = mutableListOf<Chat>()
 
 
     fun sendMessage(text: String, fromId: Int, toId: Int): Boolean {
@@ -88,9 +88,9 @@ object ChatService {
 
 
     fun getListOfMessages(chatId: Int, messageId: Int, messageCount: Int, userId: Int): List<Message> {
-        val chat = chatsList.find { it.id == chatId } ?: throw ChatIdNotFoundException()
+        val foundedChat = chatsList.find { it.id == chatId } ?: throw ChatIdNotFoundException()
 
-        val messageList = chat.messages.filter { it.id >= messageId }
+        val messageList = foundedChat.messages.filter { it.id >= messageId }
         if (messageList.isEmpty()) throw MessageIdNotFoundException()
 
         val list = messageList.take(messageCount)
