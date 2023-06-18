@@ -4,12 +4,13 @@ import Exceptions.UserIdNotFoundException
 
 fun main() {
 
+
 }
 
 object ChatService {
     private var chatsId = 0
     private var messagesId = 0
-    private val chatsList = mutableListOf<Chat>()
+    val chatsList = mutableListOf<Chat>()
 
 
     fun sendMessage(text: String, fromId: Int, toId: Int): Boolean {
@@ -20,7 +21,7 @@ object ChatService {
         val existingChat = chatsList.find { it.users.containsAll(listOf(fromId, toId)) }
         if (existingChat != null) {
             if (existingChat.messages.last().fromId != fromId) {
-                existingChat.messages.forEach { it.readTag = true }
+                existingChat.messages.forEach { chat -> if (existingChat.messages.any{it.fromId != fromId}) chat.readTag = true }
             }
             existingChat.messages.add(Message(++messagesId, fromId, toId, text, false))
             println("User ID ($fromId) sent a message \"$text\" to user ID ($toId)")
@@ -45,22 +46,18 @@ object ChatService {
     }
 
     fun deleteMessage(messageId: Int, userId: Int): Boolean {
-        for (chat in chatsList) {
-            for (message in chat.messages) {
-                if (messageId == message.id && userId == message.fromId) {
-                    chat.messages.remove(message)
-                    println("Message with ID $messageId deleted")
-                    return true
-                }
-                if (userId !== message.fromId) {
-                    println("You can't delete other people's messages")
-                    return false
-                }
-
+        chatsList.forEach { chat ->
+            chat.messages.filter { messageId == it.id && userId == it.fromId }.forEach {
+                chat.messages.remove(it)
+                println("Message with ID $messageId deleted")
+                return true
+            }
+            chat.messages.filter { userId != it.fromId }.forEach {
+                println("You can't delete other people's messages")
+                return false
             }
         }
         throw MessageIdNotFoundException()
-
     }
 
     fun deleteChat(chatId: Int): Boolean {
@@ -73,12 +70,12 @@ object ChatService {
         throw ChatIdNotFoundException()
     }
 
+
     fun getUnreadChatsCount(userId: Int): String {
         var count = 0
+
         val unreadChats = getChats(userId)
-        for (chat in unreadChats) {
-            chat.messages.find { !it.readTag && userId == it.fromId }?: count++
-        }
+        unreadChats.forEach { chat -> if (chat.messages.any{!it.readTag && userId == it.toId}) count++}
         return "User ID ($userId) have $count unread chats"
     }
 
@@ -97,7 +94,7 @@ object ChatService {
         if (messageList.isEmpty()) throw MessageIdNotFoundException()
 
         val list = messageList.take(messageCount)
-        chat.messages.filter { it.toId == userId }.forEach { it.readTag = true }
+        chatsList.forEach { chat-> chat.messages.filter { message -> message.toId == userId }.forEach { if(it.id == messageId) it.readTag = true }}
         list.filter { it.toId == userId }.forEach { it.readTag = true }
         return list.toList()
     }

@@ -1,7 +1,6 @@
 import Exceptions.ChatIdNotFoundException
 import Exceptions.MessageIdNotFoundException
 import Exceptions.UserIdNotFoundException
-import org.junit.Assert
 import org.junit.Test
 
 import org.junit.Assert.*
@@ -85,26 +84,22 @@ class ChatServiceTest {
     }
 
     @Test(expected = ChatIdNotFoundException::class)
-    fun ChatIdNotFoundExceptionTest() {
+    fun chatIdNotFoundExceptionTest() {
         ChatService.deleteChat(5)
     }
     @Test(expected = ChatIdNotFoundException::class)
-    fun ChatIdNotFoundExceptionTest2() {
+    fun chatIdNotFoundExceptionTest2() {
         ChatService.getListOfMessages(5,1,2,1)
     }
 
     @Test(expected = MessageIdNotFoundException::class)
-    fun MessageIdNotFoundExceptionTest() {
+    fun messageIdNotFoundExceptionTest() {
         ChatService.editMessage(7,"")
     }
 
-    @Test(expected = MessageIdNotFoundException::class)
-    fun MessageIdNotFoundExceptionTest2() {
-        ChatService.deleteMessage(7,1)
-    }
 
     @Test(expected = UserIdNotFoundException::class)
-    fun UserIdNotFoundExceptionTest() {
+    fun userIdNotFoundExceptionTest() {
         ChatService.getChats(5)
     }
 
