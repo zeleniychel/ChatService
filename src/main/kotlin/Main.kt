@@ -20,8 +20,9 @@ object ChatService {
         }
         val existingChat = chatsList.find { it.users.containsAll(listOf(fromId, toId)) }
         if (existingChat != null) {
+
             if (existingChat.messages.last().fromId != fromId) {
-                existingChat.messages.forEach { chat -> if (existingChat.messages.any{it.fromId != fromId}) chat.readTag = true }
+                existingChat.messages.forEach { message -> if (message.fromId == toId) message.readTag = true }
             }
             existingChat.messages.add(Message(++messagesId, fromId, toId, text, false))
             println("User ID ($fromId) sent a message \"$text\" to user ID ($toId)")
@@ -94,7 +95,7 @@ object ChatService {
         if (messageList.isEmpty()) throw MessageIdNotFoundException()
 
         val list = messageList.take(messageCount)
-        chatsList.forEach { chat-> chat.messages.filter { message -> message.toId == userId }.forEach { if(it.id == messageId) it.readTag = true }}
+        chatsList.forEach { chat-> chat.messages.filter { message -> message.toId == userId }.forEach { if(it.id in messageId..list.last().id) it.readTag = true }}
         list.filter { it.toId == userId }.forEach { it.readTag = true }
         return list.toList()
     }
