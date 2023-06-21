@@ -48,7 +48,7 @@ class ChatServiceTest {
     @Test
     fun deleteChatTest() {
         val chat = ChatService.deleteChat(1)
-        assertEquals(true, chat)
+        assertEquals("Chat with ID 1 deleted", chat)
     }
 
     @Test
@@ -73,14 +73,14 @@ class ChatServiceTest {
     @Test
     fun getLastMessagesTest() {
         val list = ChatService.getLastMessages(1)
-        assertEquals(mutableListOf("message"), list)
+        assertEquals("message", list)
     }
 
     @Test
     fun getLastMessagesTest2() {
         ChatService.deleteMessage(1,1)
         val list = ChatService.getLastMessages(1)
-        assertEquals(mutableListOf("There are no messages"), list)
+        assertEquals("There are no messages", list)
     }
 
     @Test(expected = ChatIdNotFoundException::class)
