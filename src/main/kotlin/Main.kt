@@ -3,8 +3,10 @@ import Exceptions.MessageIdNotFoundException
 import Exceptions.UserIdNotFoundException
 
 fun main() {
-
-
+    ChatService.sendMessage("111", 1, 2)
+    ChatService.sendMessage("5555", 1, 2)
+    ChatService.sendMessage("555555555", 1, 2)
+    println(ChatService.getListOfMessages(1,1,2,2))
 }
 
 object ChatService {
@@ -29,9 +31,9 @@ object ChatService {
             return true
         } else {
             val newChat = Chat(
-                ++chatsId,
-                mutableListOf(Message(++messagesId, fromId, toId, text, false)),
-                mutableListOf(fromId, toId)
+                    ++chatsId,
+                    mutableListOf(Message(++messagesId, fromId, toId, text, false)),
+                    mutableListOf(fromId, toId)
             )
             chatsList.add(newChat)
             println("User ID ($fromId) create new chat with user ID($toId), message \"$text\" отправлено")
@@ -40,7 +42,9 @@ object ChatService {
     }
 
     fun editMessage(messageId: Int, text: String): Boolean {
-        val existingMessage = chatsList.find { chat -> chat.messages.any { it.id == messageId } }?:throw MessageIdNotFoundException()
+        val existingMessage = chatsList.find { chat ->
+            chat.messages.any {
+                it.id == messageId } } ?: throw MessageIdNotFoundException()
         existingMessage.messages.find { it.id == messageId }?.text = text
         println("Message with ID $messageId has been changed")
         return true
@@ -61,60 +65,60 @@ object ChatService {
         throw MessageIdNotFoundException()
     }
 
-    fun deleteChat(chatId: Int): Boolean {
-        val chat = chatsList.find { it.id == chatId }
-        if (chat != null) {
-            chatsList.remove(chat)
-            println("Chat with ID $chatId deleted")
-            return true
-        }
-        throw ChatIdNotFoundException()
+    fun deleteChat(chatId: Int): String {
+        chatsList.remove(chatsList.find { it.id == chatId } ?: throw ChatIdNotFoundException())
+        return "Chat with ID $chatId deleted"
     }
 
 
     fun getUnreadChatsCount(userId: Int): String {
         var count = 0
-
-        val unreadChats = getChats(userId)
-        unreadChats.forEach { chat -> if (chat.messages.any{!it.readTag && userId == it.toId}) count++}
+        getChats(userId).forEach { chat -> if (chat.messages.any { !it.readTag && userId == it.toId }) count++ }
         return "User ID ($userId) have $count unread chats"
     }
 
-    fun getChats(userId: Int): MutableList<Chat> {
-        val chats = chatsList.filter { it.users.contains(userId) }.toMutableList()
-        if (chats.isEmpty()) throw UserIdNotFoundException()
-        return chats
+    fun getChats(userId: Int): List<Chat> {
+        return chatsList.filter { it.users.contains(userId) }
+                .ifEmpty { throw UserIdNotFoundException() }
     }
-
 
 
     fun getListOfMessages(chatId: Int, messageId: Int, messageCount: Int, userId: Int): List<Message> {
-        val foundedChat = chatsList.find { it.id == chatId } ?: throw ChatIdNotFoundException()
-
-        val messageList = foundedChat.messages.filter { it.id >= messageId }
-        if (messageList.isEmpty()) throw MessageIdNotFoundException()
-
-        val list = messageList.take(messageCount)
-        chatsList.forEach { chat-> chat.messages.filter { message -> message.toId == userId }.forEach { if(it.id in messageId..list.last().id) it.readTag = true }}
-        list.filter { it.toId == userId }.forEach { it.readTag = true }
-        return list.toList()
-    }
+        val foundedChat = chatsList
+                .find { it.id == chatId }?.messages
+                ?.filter { it.id >= messageId }
+                ?.ifEmpty { throw MessageIdNotFoundException() }
+                ?: throw ChatIdNotFoundException()
 
 
-    fun getLastMessages(userId: Int): MutableList<String> {
-        val lastMessagesList = mutableListOf<String>()
-        val chats = getChats(userId)
-        for (chat in chats) {
-            if (chat.messages.isEmpty()) {
-                lastMessagesList.add("There are no messages")
-            } else {
-                lastMessagesList.add(chat.messages.last().text)
+        val list = foundedChat.asSequence()
+                .take(messageCount)
+                .toList()
+
+        list.filter { it.toId == userId }
+                .forEach { it.readTag = true }
+
+
+
+        chatsList.forEach { chat ->
+            chat.messages.filter { message ->
+                message.toId == userId
+            }.forEach {
+                if (it.id in messageId..list.last().id) it.readTag = true
             }
         }
-        return lastMessagesList
+
+        return list
     }
 
-    fun clear (){
+
+    fun getLastMessages(userId: Int): String {
+        return getChats(userId).joinToString(", ") {
+            it.messages.lastOrNull()?.text ?: "There are no messages"
+        }
+    }
+
+    fun clear() {
         chatsId = 0
         messagesId = 0
         chatsList.clear()
